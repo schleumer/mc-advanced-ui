@@ -1,4 +1,4 @@
-package net.fabricmc.example.overlay;
+package li.ues.mcAdvancedUi.overlay;
 
 import com.google.common.collect.Lists;
 import net.minecraft.client.MinecraftClient;

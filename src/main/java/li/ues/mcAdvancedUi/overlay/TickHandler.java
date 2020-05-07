@@ -1,4 +1,4 @@
-package net.fabricmc.example.overlay;
+package li.ues.mcAdvancedUi.overlay;
 
 import com.google.common.base.Strings;
 import com.mojang.text2speech.Narrator;
@@ -7,11 +7,16 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.container.AnvilContainer;
 import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.HungerManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.text.*;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.HitResult;
@@ -20,6 +25,7 @@ import net.minecraft.world.level.storage.AnvilLevelStorage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 public class TickHandler {
@@ -53,8 +59,15 @@ public class TickHandler {
         }
 
         if (stack.hasEnchantments()) {
-            for (Tag enchantment : stack.getEnchantments()) {
-                System.out.println(enchantment);
+            Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(stack.getEnchantments());
+            for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+                lines.add(
+                        new TranslatableText(
+                                entry.getKey().getTranslationKey()
+                        ).append(
+                                new LiteralText(" LVL: " + entry.getValue() + " / " + entry.getKey().getMaximumLevel())
+                        )
+                );
             }
         }
 
@@ -75,8 +88,49 @@ public class TickHandler {
 
             ArrayList<Text> texts = new ArrayList<>();
 
+            int neededExperience = player.getNextLevelExperience();
+            double currentExperience = Math.ceil(player.experienceProgress * neededExperience);
+
+            texts.add(new LiteralText(
+                    "Level: " +
+                            player.experienceLevel +
+                            " " +
+                            currentExperience +
+                            " / " +
+                            neededExperience +
+                            " " +
+                            (player.experienceProgress * 100) +
+                            "%"
+            ));
+
+            texts.add(new LiteralText(
+                    "HP: " + player.getHealth() + " / " + player.getMaximumHealth()
+            ));
+
+            HungerManager hunger = player.getHungerManager();
+
+            LiteralText hungerLabel = new LiteralText(
+                    "Food: " + hunger.getFoodLevel() + " / 20 by " + hunger.getSaturationLevel()
+            );
+
+            if (!hunger.isNotFull()) {
+                hungerLabel.setStyle(new Style().setColor(Formatting.GREEN));
+            } else {
+                if (hunger.getFoodLevel() < 7) {
+                    hungerLabel.setStyle(new Style().setColor(Formatting.RED));
+                }
+            }
+
+            texts.add(hungerLabel);
+
+            texts.add(new LiteralText(""));
+
             if (!mainHand.isEmpty()) {
                 texts.addAll(itemLabel(mainHand));
+            }
+
+            if (!mainHand.isEmpty() && !offHand.isEmpty()) {
+                texts.add(new LiteralText(""));
             }
 
             if (!offHand.isEmpty()) {

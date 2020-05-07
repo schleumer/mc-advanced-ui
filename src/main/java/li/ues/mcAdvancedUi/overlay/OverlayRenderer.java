@@ -1,4 +1,4 @@
-package net.fabricmc.example.overlay;
+package li.ues.mcAdvancedUi.overlay;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
